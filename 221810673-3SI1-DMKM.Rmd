@@ -1,0 +1,106 @@
+---
+title: "UTS Data Mining"
+author: "Yully Septia Pertiwi"
+date: "10/27/2020"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(e1071)
+library(caret)
+```
+
+```{r}
+#Membaca data flag
+flag <- read.csv("D:/Politeknik Statistika STIS/Semester 5/Data Mining dan Knowledge Management/flag.csv", header = FALSE, sep = ",")
+flag <- data.frame(flag)
+
+#Mengambil 6 data teratas
+head(flag)
+```
+
+```{r}
+#Data Preprocessing
+#Menghilangkan attribut yang tidak penting
+flag2 <- flag[,-1:-5]
+flag2 <- flag2[,-2]
+flag2
+```
+
+```{r}
+str(flag2)
+```
+
+```{r}
+#Merubah tipe atribut
+flag2$V6 <- as.factor(flag2$V6)
+for (i in 2:4) {
+    flag2[, i] <- as.integer(flag2[, i])
+}
+for (i in 5:12) {
+    flag2[, i] <- as.factor(flag2[, i])
+}
+for (i in 13:17) {
+    flag2[, i] <- as.integer(flag2[, i])
+}
+for (i in 18:24) {
+    flag2[, i] <- as.factor(flag2[, i])
+}
+
+str(flag2)
+head(flag2)
+```
+
+### Split Data
+Memecah data menjadi data training(80% dari data awal) dan data test (20% dari data awal)
+```{r}
+library(caTools)
+set.seed(1234)
+sampel <- sample(2, nrow(flag2), replace = T, prob = c(0.8,0.2))
+trainingdat <- flag2[sampel==1, ]
+testingdat <- flag2[sampel==2, ]
+print(paste("Jumlah Train Dataset: ", nrow(trainingdat), "| Jumlah Test Dataset: ", nrow(testingdat)))
+```
+
+#model svm
+```{r}
+modelSVM <- svm(V6~., data=flag2)
+summary(modelSVM)
+```
+Support vector kernel default adalah bertipe radial. Level 1 sampai 10 adlah kategori variabel bahasa.
+language: 1=English, 2=Spanish, 3=French, 4=German, 5=Slavic, 6=Other Indo-European, 7=Chinese, 8=Arabic, 9=Japanese/Turkish/Finnish/Magyar, 10=Others
+
+```{r}
+# Predicting the training set results 
+y_pred1 = predict(modelSVM, newdata = trainingdat[-1]) 
+y_pred1
+
+```
+
+```{r}
+# Confusion Matrix 
+cm1 =  confusionMatrix(table(trainingdat[, 1], y_pred1))
+cm1
+```
+
+```{r}
+# Predicting the Test set results 
+y_pred2 = predict(modelSVM, newdata = testingdat[-1]) 
+y_pred2
+
+```
+
+```{r}
+# Confusion Matrix 
+cm2 =  confusionMatrix(table(testingdat[, 1], y_pred2))
+cm2
+```
+
+Kesimpulan
+1.Diperoleh jumlah data training sebesar 159 data, yaitu 80% dari data awal, dan untuk data testing nya yaitu sebesar 35, atau 20% dari data awal.
+2. Diketahui bahwa klasifikasi model SVM pada data training bertipe C-classificaton, dengan kernel radial. Cost yaitu nilai parameter kernel bernilai 1, dan banyaknya support vector sebesar 188
+
